@@ -1,0 +1,18 @@
+# Pesos de las señales para la fuerza compuesta R (deben sumar 1.0)
+weights:
+  elo: 0.50
+  fifa: 0.20
+  players: 0.30
+
+# Modelo de goles (Poisson)
+goals:
+  base_mu: 1.35      # goles promedio por equipo por partido
+  beta: 0.85         # sensibilidad a la diferencia de fuerza
+  home_boost: 0.25   # incremento aditivo a lambda del local (sedes US/MX/CA)
+  unit_weight: 0.35  # peso de las unidades ATA/DEF vs R global en el ataque/defensa efectivos
+  max_goals: 10      # tope de la matriz de marcadores
+  dixon_coles: false # ajuste opcional de empates/marcadores bajos
+
+simulation:
+  n_sims: 20000
+  seed: 20260602
