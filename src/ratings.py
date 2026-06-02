@@ -56,3 +56,12 @@ def unit_strengths_from_players(players, top_n=4):
     out = pd.DataFrame.from_dict(rows, orient="index")
     out.index.name = "team"
     return out
+
+
+def add_model_columns(df):
+    """Añade R_z, ATA_z, DEF_z (z-scores) usados por el modelo de partido."""
+    out = df.copy()
+    out["R_z"] = zscore(out["R"])
+    out["ATA_z"] = zscore(out["ATA"])
+    out["DEF_z"] = zscore(out["DEF"])
+    return out

@@ -23,6 +23,20 @@ def test_composite_rating_blend_is_weighted_sum_on_elo_scale():
     # R se reescala a escala Elo: el promedio debe acercarse al promedio de elo.
     assert 1500 < R.mean() < 2100
 
+from src.ratings import add_model_columns
+
+def test_add_model_columns_creates_z_scores():
+    df = pd.DataFrame({
+        "team": ["A", "B", "C"],
+        "R": [2000.0, 1800.0, 1600.0],
+        "ATA": [88.0, 80.0, 70.0],
+        "DEF": [85.0, 78.0, 72.0],
+    })
+    out = add_model_columns(df)
+    for col in ("R_z", "ATA_z", "DEF_z"):
+        assert col in out.columns
+        assert abs(out[col].mean()) < 1e-9
+
 def test_unit_strengths_aggregate_top_players_per_line():
     # Equipo A: dos delanteros fuertes; equipo B: dos delanteros flojos.
     players = pd.DataFrame([
