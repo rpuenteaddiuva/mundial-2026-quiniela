@@ -7,7 +7,7 @@ weights:
 # Modelo de goles (Poisson)
 goals:
   base_mu: 1.35      # goles promedio por equipo por partido
-  beta: 0.85         # sensibilidad a la diferencia de fuerza
+  beta: 0.40         # sensibilidad a la diferencia de fuerza (recalibrado: 0.85 concentraba demasiado)
   home_boost: 0.25   # incremento aditivo a lambda del local (sedes US/MX/CA)
   unit_weight: 0.35  # peso de las unidades ATA/DEF vs R global en el ataque/defensa efectivos
   max_goals: 10      # tope de la matriz de marcadores
