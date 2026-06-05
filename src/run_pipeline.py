@@ -14,7 +14,7 @@ def main():
     out = pathlib.Path("outputs"); out.mkdir(exist_ok=True)
     write_champion_table(probs, out / "probabilidades_campeon.csv")
     plot_top_champions(probs, out / "favoritos.png")
-    print(probs.head(15).to_string(index=False))
+    print(probs.head(20).to_string(index=False))
 
 if __name__ == "__main__":
     main()
