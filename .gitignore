@@ -6,3 +6,4 @@ data/raw/*
 outputs/*
 !outputs/.gitkeep
 .venv/
+CLAUDE.md

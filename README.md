@@ -171,6 +171,10 @@ TDD: cada módulo tiene su test en `tests/`. Mantener verde antes de commitear.
 <div align="center">
 
 **Hecho por Ricardo Puente** · Modelo de nodos + Monte Carlo
-[GitHub](https://github.com/rpuenteaddiuva) · Fuentes: eloratings.net, Ranking FIFA, ratings EA Sports FC
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Ricardo%20Puente-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ricardo-puente1)
+[![GitHub](https://img.shields.io/badge/GitHub-rpuenteaddiuva-181717?logo=github&logoColor=white)](https://github.com/rpuenteaddiuva)
+
+Fuentes: eloratings.net · Ranking FIFA · ratings EA Sports FC
 
 </div>
