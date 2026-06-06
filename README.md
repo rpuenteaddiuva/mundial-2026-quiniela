@@ -1,146 +1,176 @@
-# Modelo de quiniela — Mundial 2026
+<div align="center">
 
-Pipeline en Python que estima la **probabilidad de campeón** del Mundial 2026
-combinando una **fuerza compuesta por selección** (Elo + ranking FIFA + atributos
-de jugadores) con una **simulación Monte Carlo** del torneo (fase de grupos,
-mejores terceros y bracket de eliminatorias del formato de 48 equipos). El modelo
-es reutilizable **partido a partido** para apoyar la quiniela.
+# ⚽ Mundial 2026 — Modelo de Quiniela
 
-## Cómo funciona
+### ¿Quién será campeón? Un modelo estadístico propio que convierte a las 48 selecciones en nodos de fuerza y simula el torneo completo **20.000 veces** con Monte Carlo.
 
-1. **Datos** (`src/teams.py`, `src/fetch_data.py`): los 12 grupos del sorteo
-   (5 dic 2025) son un hecho fijo y se codifican con nombres canónicos. El resto
-   de señales (Elo, FIFA, jugadores) se descargan y se ensamblan en
-   `data/processed/ratings.csv`.
-2. **Ratings** (`src/ratings.py`): cada señal se estandariza (z-score) y se mezcla
-   con los pesos de `config.yaml` para construir la fuerza compuesta `R`
-   (reescalada a escala Elo, ~1500–2100). Los atributos de jugadores agregan las
-   fuerzas de unidad **POR/DEF/MED/ATA** (escala 0–100).
-3. **Modelo de partido** (`src/match_model.py`): de las fuerzas efectivas de
-   ataque y defensa se derivan los goles esperados (Poisson, ataque vs defensa),
-   la matriz de marcadores, las probabilidades de victoria/empate/derrota y el
-   marcador más probable.
-4. **Simulación** (`src/simulate.py`, `src/bracket_2026.py`): round-robin de
-   grupos con desempates FIFA (puntos → diferencia de goles → goles a favor),
-   selección de los 8 mejores terceros, construcción del cuadro de Ronda de 32 y
-   Monte Carlo del torneo completo.
-5. **Salidas** (`src/report.py`, `src/run_pipeline.py`, `src/network.py`): tabla
-   de probabilidades de campeón, gráfico de favoritos y grafo de fuerza por grupos.
-6. **Análisis por-partido** (`src/predict.py`): CLI reutilizable durante la
-   quiniela.
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-26%20passed-2ea44f?logo=pytest&logoColor=white)](#-tests)
+[![Simulaciones](https://img.shields.io/badge/Monte%20Carlo-20.000%20sims-c9a227)](#-resultados)
+[![Licencia](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
 
-## Contrato de datos
+</div>
 
-`data/processed/ratings.csv` — una fila por selección (48 filas):
+---
+
+## 🏆 Resultados
+
+> Probabilidad de levantar la copa según un modelo de **fuerza compuesta por selección**
+> (Elo + ranking FIFA + plantilla) y **20.000 simulaciones Monte Carlo** del torneo completo.
+> Datos al 1 jun 2026.
+
+<div align="center">
+
+![Favoritos Mundial 2026](outputs/linkedin_favoritos.png)
+
+</div>
+
+| # | Selección | P(campeón) | # | Selección | P(campeón) |
+|--:|-----------|-----------:|--:|-----------|-----------:|
+| 1 | 🇫🇷 Francia    | **21,3 %** | 6 | 🇧🇷 Brasil       | 8,4 % |
+| 2 | 🇪🇸 España     | **19,6 %** | 7 | 🇧🇪 Bélgica      | 3,3 % |
+| 3 | 🏴 Inglaterra | **14,9 %** | 8 | 🇩🇪 Alemania     | 3,1 % |
+| 4 | 🇦🇷 Argentina  | **11,9 %** | 9 | 🇳🇱 Países Bajos | 3,0 % |
+| 5 | 🇵🇹 Portugal   | **9,4 %**  |10 | 🇨🇴 Colombia     | 1,2 % |
+
+<div align="center">
+
+### Las 48 selecciones, ordenadas
+
+![Las 48 selecciones](outputs/linkedin_tabla48.png)
+
+</div>
+
+> 💡 Ningún favorito supera el ~21 %. Es lo que dice también el mercado de apuestas:
+> en un torneo de 48 equipos a partido único en eliminatorias, **la incertidumbre manda**.
+
+---
+
+## 🧠 Cómo funciona
+
+El modelo transforma cada selección en un **nodo con una fuerza compuesta `R`** y deja que el
+torneo se juegue solo, miles de veces.
 
 ```
-team, confederation, elo, fifa_points, player_overall, POR, DEF, MED, ATA, R
+ratings.csv  ──►  fuerza compuesta R  ──►  modelo de partido (Poisson)  ──►  Monte Carlo  ──►  P(campeón)
+ (48 equipos)      Elo·FIFA·plantilla       goles esperados + V/E/D         20.000 torneos     + gráficas
 ```
 
-donde `POR/DEF/MED/ATA/player_overall` están en escala 0–100 y `R` en escala tipo
-Elo (~1500–2100).
+1. **Datos** — los 12 grupos del sorteo (5 dic 2025) son un hecho fijo; el resto de señales
+   (Elo, ranking FIFA, atributos de plantilla) se ensamblan en `data/processed/ratings.csv`.
+2. **Fuerza compuesta `R`** — cada señal se estandariza (z-score), se mezcla con los pesos de
+   `config.yaml` y se reescala a escala Elo (~1500–2150). Las plantillas aportan las unidades
+   **POR / DEF / MED / ATA**.
+3. **Modelo de partido (Poisson)** — de las fuerzas efectivas de ataque y defensa salen los goles
+   esperados, la matriz de marcadores, las probabilidades de victoria/empate/derrota y el marcador
+   más probable.
+4. **Simulación Monte Carlo** — round-robin de grupos con desempates FIFA, selección de los 8
+   mejores terceros, cuadro de Ronda de 32 y 20.000 torneos completos.
+5. **Salidas** — tabla de probabilidades, gráficas editoriales y grafo de fuerza por grupos.
 
-## Instalación
+---
+
+## 🚀 Inicio rápido
 
 ```bash
+# 1. Instalar dependencias (Python 3.11+)
 pip install -r requirements.txt
+
+# 2. Correr el pipeline completo: ratings → Monte Carlo → outputs/
+python -m src.run_pipeline
+
+# 3. (opcional) Suite de tests
+python -m pytest -q
 ```
 
-Requiere Python 3.11+. Dependencias: pandas, numpy, scipy, networkx, matplotlib,
-PyYAML, requests, BeautifulSoup4, pytest.
+El pipeline imprime el top 20 de favoritos y escribe en `outputs/`:
+- `probabilidades_campeon.csv` — las 48 probabilidades (suman ~1)
+- `favoritos.png` — gráfico de barras de los favoritos
 
-## Flujo de uso
+---
 
-1. **Descargar y ensamblar los datos** (genera `data/processed/ratings.csv` con
-   snapshots crudos fechados en `data/raw/`):
+## 🎯 Análisis partido a partido
 
-   ```bash
-   python -c "from src.fetch_data import fetch_all; fetch_all()"
-   ```
-
-2. **Correr el pipeline completo** (Monte Carlo + reporte):
-
-   ```bash
-   python -m src.run_pipeline
-   ```
-
-   Imprime el top 15 de favoritos y genera en `outputs/`:
-   - `probabilidades_campeon.csv` (48 filas, las probabilidades suman ~1)
-   - `favoritos.png` (gráfico de barras de los favoritos)
-
-## CLI por-partido
-
-Para analizar un cruce concreto durante la quiniela:
+Lo que se usa **cada jornada** del torneo para la quiniela:
 
 ```bash
 python -m src.predict --home "Mexico" --away "Korea Republic" --home-venue
 ```
 
-Usa `--home-venue` cuando el equipo local juega en sede anfitriona (US/MX/CA),
-para aplicar la ventaja local del modelo. Salida:
+Usa `--home-venue` cuando el local juega en sede anfitriona (US/MX/CA). Salida:
 
 ```
 Mexico vs Korea Republic
-  P(victoria Mexico): ...
-  P(empate):          ...
-  P(victoria Korea Republic): ...
-  Goles esperados: ... - ...
-  Marcador más probable: x-y
+  P(victoria Mexico):         52 %
+  P(empate):                  24 %
+  P(victoria Korea Republic): 24 %
+  Goles esperados:            1.6 - 1.1
+  Marcador más probable:      1-1
 ```
 
-## Configuración (pesos y parámetros)
+> Los nombres van **en inglés**, exactamente como en `src/teams.py`
+> (p. ej. `"Korea Republic"`, `"Turkiye"`, `"Congo DR"`).
 
-Todos los pesos y parámetros viven en `config.yaml`:
+---
 
-- `weights`: peso de cada señal en la fuerza compuesta `R` (`elo`, `fifa`,
-  `players`; deben sumar 1.0).
-- `goals`: parámetros del modelo de goles Poisson (`base_mu`, `beta`,
-  `home_boost`, `unit_weight`, `max_goals`, `dixon_coles`).
-- `simulation`: número de simulaciones (`n_sims`) y semilla (`seed`).
+## ⚙️ Configuración
 
-## Tests
+Todo el modelo se ajusta desde `config.yaml`, sin tocar código:
 
-```bash
-pytest -v
-```
-
-## Caveats
-
-- **Snapshots fechados:** `fetch_all()` guarda los HTML crudos en `data/raw/` con
-  fecha en el nombre para que los resultados sean reproducibles frente a cambios
-  en las fuentes en vivo.
-- **Fallback de jugadores:** si el componente de atributos de jugadores falla, las
-  columnas `POR/DEF/MED/ATA` se rellenan con `NaN` y el ensamblado debe documentar
-  la cobertura efectiva de cada señal. El fetch de FIFA y jugadores está marcado
-  como pendiente en `src/fetch_data.py` (`fetch_fifa`, `fetch_players`); ver el
-  código para las fuentes previstas.
-- **Aproximación de los mejores terceros:** la asignación exacta de los 8 mejores
-  terceros a los huecos del cuadro depende del Anexo C de la reglamentación FIFA
-  (495 combinaciones según cuáles 8 de los 12 grupos producen un tercero
-  clasificado) y solo se determina con los resultados reales. Aquí se usa una
-  **aproximación documentada**: el n-ésimo mejor tercero (ranking 0..7) se asigna
-  al n-ésimo hueco en orden de aparición del cuadro (M74, M77, M79, M80, M81, M82,
-  M85, M87). Su efecto sobre la probabilidad de campeón es de segundo orden. Ver
-  `src/bracket_2026.py` para el detalle y las restricciones por hueco.
-- **Desempates de grupo:** se aplican puntos → diferencia de goles → goles a
-  favor. El enfrentamiento directo y el fair play se omiten por simplicidad; su
-  impacto sobre la probabilidad de campeón es marginal.
-- **Modelo de goles:** el contrato actual es Poisson independiente. El ajuste
-  Dixon-Coles (flag `goals.dixon_coles`) queda como mejora posterior.
-
-## Estructura del proyecto
-
-| Archivo | Responsabilidad |
+| Bloque | Qué controla |
 |---|---|
-| `config.yaml` | Pesos de señales, parámetros del modelo de goles, N de simulaciones, seed |
+| `weights` | Peso de cada señal en `R` (`elo` 0.50 · `fifa` 0.20 · `players` 0.30) |
+| `goals` | Modelo Poisson: `base_mu`, `beta`, `home_boost`, `unit_weight`, `max_goals` |
+| `simulation` | Nº de simulaciones (`n_sims`) y semilla (`seed`) — resultados reproducibles |
+
+**Calibración:** `beta = 0.40`. Con el valor inicial (0.85) la distribución se concentraba de forma
+irreal (favorito al 34 %); con 0.40 el favorito queda en ~21 %, coherente con las casas de apuestas.
+
+---
+
+## 🗂️ Arquitectura
+
+| Módulo | Responsabilidad |
+|---|---|
 | `src/teams.py` | 12 grupos × 4 equipos, nombres canónicos, sedes anfitrionas |
-| `src/ratings.py` | z-score, fuerzas de unidad, fuerza compuesta `R`, columnas del modelo |
+| `src/ratings.py` | z-score, fuerzas de unidad, fuerza compuesta `R` |
 | `src/match_model.py` | Goles esperados, matriz de marcadores, P(V/E/D), marcador más probable |
 | `src/simulate.py` | Round-robin, tabla de grupo, mejores terceros, KO, Monte Carlo |
 | `src/bracket_2026.py` | Cuadro de Ronda de 32 (slots y asignación de terceros) |
 | `src/network.py` | Grafo de fuerza (networkx) + visualización |
-| `src/fetch_data.py` | Descarga Elo/FIFA/jugadores y ensambla `data/processed/` |
 | `src/predict.py` | CLI de análisis por-partido |
 | `src/report.py` | Tablas y figuras de salida |
 | `src/run_pipeline.py` | Orquestador del pipeline completo |
-| `tests/` | Tests unitarios por módulo |
+| `tests/` | 26 tests unitarios (uno por módulo) |
+
+---
+
+## ⚠️ Caveats
+
+- **Mejores terceros:** la asignación exacta de los 8 mejores terceros a los huecos del cuadro
+  depende del Anexo C de FIFA (495 combinaciones) y solo se fija con resultados reales. Aquí se usa
+  una **aproximación documentada**; su efecto sobre la probabilidad de campeón es de segundo orden.
+- **Desempates de grupo:** puntos → diferencia de goles → goles a favor. Se omiten enfrentamiento
+  directo y fair play (impacto marginal).
+- **Modelo de goles:** Poisson independiente. El ajuste Dixon-Coles queda como mejora posterior.
+- **Datos:** verificar los Elo de los top contra una fuente autoritativa (eloratings.net / Wikipedia)
+  antes de re-correr con datos nuevos.
+
+---
+
+## 🧪 Tests
+
+```bash
+python -m pytest -q   # 26 passed
+```
+
+TDD: cada módulo tiene su test en `tests/`. Mantener verde antes de commitear.
+
+---
+
+<div align="center">
+
+**Hecho por Ricardo Puente** · Modelo de nodos + Monte Carlo
+[GitHub](https://github.com/rpuenteaddiuva) · Fuentes: eloratings.net, Ranking FIFA, ratings EA Sports FC
+
+</div>

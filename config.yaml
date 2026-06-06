@@ -14,5 +14,5 @@ goals:
   dixon_coles: false # ajuste opcional de empates/marcadores bajos
 
 simulation:
-  n_sims: 5000
+  n_sims: 20000
   seed: 20260602
